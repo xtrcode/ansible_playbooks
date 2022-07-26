@@ -1,0 +1,6 @@
+postfix_aliases:
+  - user: root
+    alias: "{{notification_email}}"
+postfix_relayhost: smtp.gmail.com
+postfix_relaytls: true
+postfix_smtp_tls_cafile: /etc/ssl/certs/ca-certificates.crt

@@ -1,0 +1,71 @@
+---
+- hosts: setup
+  vars_prompt:
+    - name: user_name
+      prompt: Enter username
+      private: no
+
+    - name: notification_email
+      prompt: Enter notification email
+      private: no
+
+    - name: postfix_sasl_user
+      prompt: Enter smtp username/email
+      private: no
+
+    - name: postfix_sasl_password
+      prompt: Enter smtp password
+
+  vars:
+    - ansible_user: root
+    - user_home: "/home/{{user_name}}"
+    - ssh_pubkey: "/home/{{user_name}}/.ssh/id_ed25519.pub"
+  vars_files:
+    - vendor/geerlingguy.security.yml
+    - vendor/oefenweb.postfix.yml
+    - vendor/grzegorznowak.ansible_ssh_login_notifications.yml
+  tasks:
+    - name: Add default user
+      ansible.builtin.user:
+        name: '{{user_name}}'
+        uid: 1000
+        create_home: yes
+        home: '{{user_home}}'
+        state: present
+
+    - name: 'Add ssh key for default user: {{user_name}}'
+      ansible.posix.authorized_key:
+        user: '{{user_name}}'
+        state: present
+        key: "{{ lookup('file', '{{ ssh_pubkey }}') }}"
+
+    - name: Hardening (SSH, Automatic Updates, Sudoers)
+      include_role:
+        name: geerlingguy.security
+
+    - name: Add default packages
+      apt:
+        name: '{{ item }}'
+        update_cache: yes
+        state: latest
+      loop:
+        - nano
+        - curl
+        - wget
+        - nload
+        - bashtop
+        - htop
+        - nmap
+        - tcpdump
+        - zip
+        - unzip
+    - name: Setup mail relay to Gmail
+      include_role:
+        name: oefenweb.postfix
+    - name: Enable SSH login notifications via email
+      include_role:
+        name: grzegorznowak.ansible_ssh_login_notifications
+
+  post_tasks:
+    - name: Sending test email to verify setup
+      shell: echo "The installation on >" $(hostname) "< was successfull at " $(date) | mailx -s "Installation successfull" "{{notification_email}}"
