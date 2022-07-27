@@ -1,0 +1,17 @@
+---
+- hosts: setup
+  become: yes # needed for apt if ssh user isn't root
+  vars_prompt:
+    - name: user_name
+      prompt: Default user to add to group 'docker'
+      private: no
+
+  vars_files:
+    - vendor/geerlingguy.docker.yml
+
+  tasks:
+    - name: Install docker
+      include_role:
+        name: geerlingguy.docker
+
+   
