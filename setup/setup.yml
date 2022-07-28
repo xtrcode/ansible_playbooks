@@ -55,6 +55,7 @@
         uid: 1000
         create_home: yes
         home: '{{user_home}}'
+        shell: /bin/bash
         state: present
 
     - name: 'Add ssh key for default user: {{user_name}}'
